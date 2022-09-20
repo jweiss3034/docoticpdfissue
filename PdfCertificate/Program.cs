@@ -54,9 +54,12 @@ var bytes = Document.Create(container =>
     });
 }).GeneratePdf();
 
+//Uncomment to save file to disk
+//var fileName = $"Encrypted_{DateTime.Now:yyyyMMdd_hhmmss}.pdf";
 //var path = Directory.GetCurrentDirectory();
-//var filePath = Path.Combine(path, $"Encrypted_{DateTime.Now:yyyyMMdd_hhmmss}.pdf");
+//var filePath = Path.Combine(path, fileName);
 byte[] securePdf;
+int securePdfLength;
 using (var pdf = new PdfDocument(bytes))
 {
     var cert = new X509Certificate2(CERT_PATH);
@@ -74,8 +77,10 @@ using (var pdf = new PdfDocument(bytes))
     using (var ms = new MemoryStream())
     {
         pdf.Save(ms, saveOptions);
-        securePdf = ms.GetBuffer();
-        ms.Flush();
+        securePdfLength = (int)ms.Length;
+        securePdf = ms.ToArray();
+
+        //Uncomment to save file to disk
         //pdf.Save(filePath, saveOptions);
     }
 }
@@ -86,7 +91,11 @@ var mailMessage = new MailMessage(mailaddress, mailaddress)
     Subject = "Encrypted PDF"
 };
 
-var attachment = new Attachment(new MemoryStream(securePdf), "file.pdf");
+//Uncomment to attach file from disk
+//var fileBytes = File.ReadAllBytes(filePath);
+//var attachment = new Attachment(new MemoryStream(fileBytes, 0, fileBytes.Length), fileName);
+
+var attachment = new Attachment(new MemoryStream(securePdf, 0, securePdfLength), "file.pdf");
 mailMessage.Attachments.Add(attachment);
 using var smtp = new SmtpClient(SMTP_HOST);
 smtp.Send(mailMessage);
